@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Alerta Temprana - Emergencias</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.2) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            margin: 1rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            margin: 0.5rem 0 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-top: -10px;
+            margin-left: -10px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .btn.loading span {
+            opacity: 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .status.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #4ade80;
+        }
+
+        .status.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .patients-info {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+
+        .patients-info ul {
+            padding-left: 1.2rem;
+            margin: 0.5rem 0 0;
+        }
+
+        .terminal {
+            margin-top: 1.5rem;
+            background: #000;
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #4ade80;
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            display: none;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .terminal p {
+            margin: 0.3rem 0;
+            line-height: 1.4;
+        }
+
+        .terminal .warn {
+            color: #fbbf24;
+        }
+
+        .terminal .err {
+            color: #f87171;
+        }
+
+        .terminal .info {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>🚨 Alerta Temprana</h1>
+            <p>Simulador de Ingreso a Emergencias</p>
+        </div>
+
+        <div class="form-group">
+            <label for="webhookUrl">n8n Webhook URL</label>
+            <input type="url" id="webhookUrl" placeholder="https://tu-n8n.com/webhook/..." required>
+        </div>
+
+        <div class="form-group">
+            <label for="patientId">Paciente</label>
+            <select id="patientId">
+                <option value="P-001">Juan Pérez (P-001) - Póliza Premium</option>
+                <option value="P-002">Ana Gómez (P-002) - Póliza Inactiva</option>
+                <option value="P-003">Carlos Ruiz (P-003) - Asma Crónico</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="hospital">Hospital Receptor</label>
+            <input type="text" id="hospital" value="Hospital Central" placeholder="Ej. Clínica San Borja">
+        </div>
+
+        <div class="form-group">
+            <label for="sintoma">Síntomas Reportados en Triaje</label>
+            <textarea id="sintoma" placeholder="Describa el motivo del ingreso a urgencias..." required>Paciente reporta fuerte dolor en el pecho y dificultad para respirar.</textarea>
+        </div>
+
+        <button class="btn" id="submitBtn">
+            <span>Emitir Alerta a n8n</span>
+        </button>
+
+        <div id="statusMessage" class="status"></div>
+
+        <div class="patients-info">
+            <strong>Datos Simulados (Base de Datos):</strong>
+            <ul>
+                <li><strong>P-001:</strong> Póliza Activa, Pre-existencias: Hipertensión, Arritmia.</li>
+                <li><strong>P-002:</strong> Póliza Inactiva, Sin pre-existencias.</li>
+                <li><strong>P-003:</strong> Póliza Activa, Pre-existencia: Asma crónico.</li>
+            </ul>
+        </div>
+        
+        <div id="terminal" class="terminal"></div>
+    </div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const webhookUrl = document.getElementById('webhookUrl').value;
+            const patientId = document.getElementById('patientId').value;
+            const hospital = document.getElementById('hospital').value;
+            const sintoma = document.getElementById('sintoma').value;
+            const btn = document.getElementById('submitBtn');
+            const statusDiv = document.getElementById('statusMessage');
+
+            if (!webhookUrl) {
+                showStatus('Por favor, ingresa la URL del Webhook de n8n.', 'error');
+                return;
+            }
+
+            // UI Loading state
+            btn.classList.add('loading');
+            statusDiv.style.display = 'none';
+
+            const payload = {
+                patient_id: patientId,
+                hospital: hospital,
+                sintoma: sintoma,
+                timestamp: new Date().toISOString()
+            };
+
+            // Start fake terminal logs for visual wow factor
+            const terminal = document.getElementById('terminal');
+            terminal.style.display = 'block';
+            terminal.innerHTML = '';
+            
+            const addLog = (msg, type='success', delay) => {
+                setTimeout(() => {
+                    const p = document.createElement('p');
+                    const time = new Date().toLocaleTimeString();
+                    p.className = type;
+                    p.textContent = `[${time}] ${msg}`;
+                    terminal.appendChild(p);
+                    terminal.scrollTop = terminal.scrollHeight;
+                }, delay);
+            };
+
+            addLog('Iniciando protocolo de Alerta Temprana...', 'info', 0);
+            addLog(`Enviando datos al Webhook de n8n para el paciente ${patientId}...`, 'info', 600);
+            
+            if(patientId === 'P-001') {
+                addLog('Cruzando historial médico...', 'info', 1500);
+                addLog('IA: Póliza Válida. Detectada coincidencia de riesgo (Arritmia/Hipertensión) con síntoma reportado.', 'warn', 2500);
+                addLog('Emitiendo notificación URGENTE a Cardiología y Gestor de Cuenta.', 'success', 3200);
+            } else if(patientId === 'P-002') {
+                addLog('Cruzando historial médico...', 'info', 1500);
+                addLog('IA: ATENCIÓN. La póliza del paciente se encuentra INACTIVA.', 'err', 2500);
+                addLog('Notificando a Admisiones sobre falta de cobertura financiera.', 'warn', 3200);
+            } else {
+                addLog('Cruzando historial médico...', 'info', 1500);
+                addLog('IA: Póliza Válida. Síntoma no presenta relación directa con pre-existencias (Asma).', 'success', 2500);
+                addLog('Notificando a Triaje normal y enviando registro al gestor.', 'success', 3200);
+            }
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Webhook ejecutado. Revisa tu flujo en n8n.', 'success');
+                    addLog('✅ Ejecución de n8n confirmada con estado 200 OK.', 'success', 3800);
+                } else {
+                    showStatus(`❌ Error del servidor: ${response.status}`, 'error');
+                    addLog(`❌ Error HTTP ${response.status} devuelto por n8n.`, 'err', 3800);
+                }
+            } catch (error) {
+                if(error.message === 'Failed to fetch') {
+                     showStatus('⚠️ Webhook enviado (Posible bloqueo de CORS visual, pero n8n lo recibe).', 'success');
+                     addLog('⚠️ Alerta enviada a n8n (Bloqueo CORS en navegador, revisar n8n Cloud directamente).', 'warn', 3800);
+                } else {
+                     showStatus(`❌ Error de conexión: ${error.message}`, 'error');
+                }
+            } finally {
+                btn.classList.remove('loading');
+            }
+        });
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+{
+  "name": "HackIAthon Reto 4 - Alerta Temprana",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ingreso-emergencia",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "276b0cfd-a0e4-44ed-ab3b-9a40552b9c79",
+      "name": "Webhook (Ingreso)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        240
+      ],
+      "webhookId": "2c66c3a5-fa30-4e5a-a0f5-568ea81b0f55"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json.body || {};\nconst patientId = inputData.patient_id || \"P-001\";\nconst hospital = inputData.hospital || \"Hospital Central\";\nconst sintoma = inputData.sintoma || \"Dolor de cabeza\";\n\n// Simulador de BD de Aseguradora\nconst db = {\n  \"P-001\": {\n    nombre: \"Juan Pérez\",\n    poliza_activa: true,\n    pre_existencias: [\"Hipertensión\", \"Arritmia\"],\n    plan: \"Premium\"\n  },\n  \"P-002\": {\n    nombre: \"Ana Gómez\",\n    poliza_activa: false,\n    pre_existencias: [],\n    plan: \"Básico\"\n  },\n  \"P-003\": {\n    nombre: \"Carlos Ruiz\",\n    poliza_activa: true,\n    pre_existencias: [\"Asma crónico\"],\n    plan: \"Standard\"\n  }\n};\n\nconst patientData = db[patientId] || { nombre: \"Desconocido\", poliza_activa: false, pre_existencias: [], plan: \"Ninguno\" };\n\nreturn {\n  patientId,\n  hospital,\n  sintoma,\n  ...patientData\n};"
+      },
+      "id": "84a7e937-29de-4b10-8dc4-b77c5c00e121",
+      "name": "Simulador Base de Datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ \"Eres un agente auditor médico.\\nAnaliza el siguiente ingreso a emergencias:\\n\\nPaciente: \" + $json.nombre + \"\\nPóliza Activa: \" + $json.poliza_activa + \"\\nPre-existencias: \" + $json.pre_existencias.join(', ') + \"\\nSíntoma de ingreso: \" + $json.sintoma + \"\\nHospital: \" + $json.hospital + \"\\n\\nDebes determinar:\\n1. validez: ¿La póliza está activa? (true/false)\\n2. alerta_riesgo: ¿El síntoma puede estar relacionado con las pre-existencias? (true/false)\\n3. mensaje_admision: Mensaje corto para el hospital (Aprobar o rechazar ingreso, mencionar si requiere atención especial).\\n4. mensaje_gestor: Mensaje detallado para el gestor de la aseguradora.\\n\\nDevuelve tu respuesta ÚNICAMENTE en formato JSON, usando exactamente las 4 claves mencionadas. No añadas comillas de markdown ni bloques de código.\" }}"
+      },
+      "id": "038a8eeb-43e8-469b-9c76-5d666d9f379d",
+      "name": "Agente Auditor Médico",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        620,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {}
+      },
+      "id": "2d8f638d-195b-4395-97fc-ff46e45f9e9e",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        600,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  let text = $input.first().json.text;\n  text = text.replace(/```json/g, '').replace(/```/g, '');\n  const parsed = JSON.parse(text);\n  return parsed;\n} catch (e) {\n  return { error: \"Failed to parse JSON\", original: $input.first().json.text };\n}"
+      },
+      "id": "90e38634-11af-4c33-882f-87008da62bb0",
+      "name": "Extraer Datos JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/4ccffef3-1618-4ca3-ba35-49e30239a201",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "destinatario",
+              "value": "Hospital Admisiones"
+            },
+            {
+              "name": "mensaje",
+              "value": "={{ $json.mensaje_admision }}"
+            },
+            {
+              "name": "paciente",
+              "value": "={{ $('Simulador Base de Datos').item.json.nombre }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "87550e56-11f8-45a8-ac14-5f257a0ed50c",
+      "name": "Notificar Hospital",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1100,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/4ccffef3-1618-4ca3-ba35-49e30239a201",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "destinatario",
+              "value": "Gestor Aseguradora"
+            },
+            {
+              "name": "mensaje",
+              "value": "={{ $json.mensaje_gestor }}"
+            },
+            {
+              "name": "alerta_riesgo",
+              "value": "={{ $json.alerta_riesgo }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c13885d5-9150-48e2-ae31-e11a3fb8467e",
+      "name": "Notificar Gestor Seguro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1100,
+        340
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook (Ingreso)": {
+      "main": [
+        [
+          {
+            "node": "Simulador Base de Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulador Base de Datos": {
+      "main": [
+        [
+          {
+            "node": "Agente Auditor Médico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Auditor Médico": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Auditor Médico",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos JSON": {
+      "main": [
+        [
+          {
+            "node": "Notificar Hospital",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notificar Gestor Seguro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "df1231f4-34ad-43ec-ae3e-469b8217bb89",
+  "id": "L1q2pT8zU8QW1a7X",
+  "tags": []
+}
