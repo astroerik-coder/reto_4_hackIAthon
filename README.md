@@ -16,17 +16,16 @@ Este repositorio contiene la solución completa para el **Reto 4**. El objetivo 
 Sigue estos pasos para levantar el proyecto en tu máquina o cuenta de la nube en menos de 5 minutos:
 
 ### 1. Preparar las Notificaciones (Webhook.site)
-1.  Abre tu navegador y entra a [Webhook.site](https://webhook.site/).
-2.  Automáticamente se generará una **Your unique URL**. Cópiala.
-3.  Mantén esa pestaña abierta, ya que allí llegarán las alertas enviadas por la Inteligencia Artificial.
+1.  El flujo ya está preconfigurado con una URL de prueba. Abre tu navegador y entra a la bandeja de entrada del webhook: [https://webhook.site/#!/4ccffef3-1618-4ca3-ba35-49e30239a201](https://webhook.site/#!/4ccffef3-1618-4ca3-ba35-49e30239a201).
+2.  Mantén esa pestaña abierta, ya que allí llegarán las alertas enviadas por la Inteligencia Artificial al Hospital y al Gestor del Seguro.
 
 ### 2. Configurar n8n
 1.  Abre tu instancia de **n8n** (ya sea n8n Cloud o Localhost).
 2.  Ve a *Workflows* y selecciona **Import from File...**
 3.  Selecciona el archivo `reto4_n8n_workflow.json` incluido en esta carpeta.
 4.  Una vez cargado el flujo:
-    *   Haz clic en el nodo **Notificar Hospital** y reemplaza la URL por la que obtuviste en el paso 1.
-    *   Haz lo mismo en el nodo **Notificar Gestor Seguro**.
+    *   Los nodos **Notificar Hospital** y **Notificar Gestor Seguro** ya tienen configurada la URL `https://webhook.site/4ccffef3-1618-4ca3-ba35-49e30239a201`. Puedes dejarla así para usar la bandeja del paso 1, o cambiarla por una propia si lo prefieres.
+    *   *(Opcional)* Hay un nuevo nodo llamado **Registro en Notion** al final del flujo. Si deseas guardar un historial de los ingresos, conecta tu cuenta de Notion, crea una base de datos y vincúlala a este nodo.
 5.  **Configurar la Inteligencia Artificial:**
     *   Haz clic en el nodo llamado **Google Gemini Chat Model** (o el de OpenAI si decidiste cambiarlo).
     *   En "Credential to connect with", añade tu **API Key**. *(Recuerda que la capa gratuita de Gemini permite 15 peticiones por minuto. Si da error 429, solo espera 1 minuto).*

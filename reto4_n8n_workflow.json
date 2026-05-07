@@ -61,7 +61,7 @@
     },
     {
       "parameters": {
-        "jsCode": "try {\n  let text = $input.first().json.text;\n  text = text.replace(/```json/g, '').replace(/```/g, '');\n  const parsed = JSON.parse(text);\n  return parsed;\n} catch (e) {\n  return { error: \"Failed to parse JSON\", original: $input.first().json.text };\n}"
+        "jsCode": "try {\n  let text = $input.first().json.text;\n  text = text.replace(/```json/g, '').replace(/```/g, '');\n  const parsed = JSON.parse(text);\n  \n  // Extraer info del simulador para pasarla a los nodos finales\n  const pacienteInfo = $('Simulador Base de Datos').first().json;\n  parsed.paciente = pacienteInfo.nombre;\n  parsed.sintoma = pacienteInfo.sintoma;\n  parsed.hospital = pacienteInfo.hospital;\n  \n  return parsed;\n} catch (e) {\n  return { error: \"Failed to parse JSON\", original: $input.first().json.text };\n}"
       },
       "id": "90e38634-11af-4c33-882f-87008da62bb0",
       "name": "Extraer Datos JSON",
@@ -89,7 +89,7 @@
             },
             {
               "name": "paciente",
-              "value": "={{ $('Simulador Base de Datos').item.json.nombre }}"
+              "value": "={{ $json.paciente }}"
             }
           ]
         },
@@ -134,6 +134,45 @@
       "position": [
         1100,
         340
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "create",
+        "databaseId": {
+          "__rl": true,
+          "value": "",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Paciente|title",
+              "textContent": "={{ $json.paciente }}"
+            },
+            {
+              "key": "Síntoma|rich_text",
+              "textContent": "={{ $json.sintoma }}"
+            },
+            {
+              "key": "Alerta Riesgo|checkbox",
+              "checkboxValue": "={{ $json.alerta_riesgo }}"
+            },
+            {
+              "key": "Veredicto Hospital|rich_text",
+              "textContent": "={{ $json.mensaje_admision }}"
+            }
+          ]
+        }
+      },
+      "id": "e0e37bc1-4475-430c-9d6f-784824d55b3f",
+      "name": "Registro en Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        540
       ]
     }
   ],
@@ -193,6 +232,11 @@
           },
           {
             "node": "Notificar Gestor Seguro",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Registro en Notion",
             "type": "main",
             "index": 0
           }
